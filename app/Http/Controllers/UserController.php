@@ -1,0 +1,104 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\UpdatePasswordRequest;
+use App\Http\Requests\UpdateUserRequest;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Symfony\Component\HttpFoundation\Response;
+
+class UserController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(): JsonResponse
+    {
+        $users = User::all();
+
+        return response()->json([
+            'status' => true,
+            'users' => $users
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(User $user): JsonResponse
+    {
+//        $user = User::findorFail($user->id);
+
+        return response()->json([
+            'status' => true,
+            'user' => $user
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateUserRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        $validated = $request->validated();
+
+        $user->update($validated);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'User updated successfully',
+            'user' => $user,
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Current password is incorrect'
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user->password = Hash::make($request->new_password);
+
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password updated successfully',
+        ], Response::HTTP_OK);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(): JsonResponse
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $user->delete();
+        Auth::user()->tokens()->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Account deleted successfully',
+        ], Response::HTTP_OK);
+    }
+}
