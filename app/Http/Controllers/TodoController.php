@@ -81,7 +81,7 @@ class TodoController extends Controller
     /**
      * Update the Status of the Specified Resource
      */
-    public function complete(Todo $todo): JsonResponse
+    public function completed(Todo $todo): JsonResponse
     {
         if (!$todo || $todo->user_id !== auth()->id()) {
             return response()->json([
